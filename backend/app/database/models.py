@@ -11,7 +11,7 @@ class ShipmentStatus(str, Enum):
     OUT_FOR_DELIVERY = "Out for Delivery"
 
 class Shipment(SQLModel, table=True):
-    __tablename__ = "shipments"
+    __tablename__ = "shipment"
 
     id: int = Field(primary_key=True)
     content: str
