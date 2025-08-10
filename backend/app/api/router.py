@@ -1,15 +1,14 @@
 from fastapi import APIRouter, HTTPException, status
 
+from app.api.dependencies import ServiceDep
 from app.api.schemas.shipment import ShipmentCreate, ShipmentRead, ShipmentUpdate
-from app.api.services.shipment import ShipmentService
 from app.database.models import Shipment
-from app.database.session import SessionDep
 
 router = APIRouter(prefix="/shipment", tags=["Shipment"])
 
 @router.get("/", response_model=ShipmentRead)
-async def get_shipment(id: int, session: SessionDep):
-    shipment = await ShipmentService(session).get(id)
+async def get_shipment(id: int, service: ServiceDep):
+    shipment = await service.get(id)
 
     if shipment is None:
         raise HTTPException(
@@ -20,12 +19,11 @@ async def get_shipment(id: int, session: SessionDep):
     return shipment
 
 @router.post("/")
-async def submit_shipment(shipment: ShipmentCreate, session: SessionDep) -> Shipment:
-    return await ShipmentService(session).add(shipment)
+async def submit_shipment(shipment: ShipmentCreate, service: ServiceDep) -> Shipment:
+    return await service.add(shipment)
 
 @router.patch("/", response_model=ShipmentRead)
-async def patch_shipment(id: int, shipment_update: ShipmentUpdate, session: SessionDep):
-    
+async def patch_shipment(id: int, shipment_update: ShipmentUpdate, service: ServiceDep):
     update = shipment_update.model_dump(exclude_none=True)
     
     if not update:
@@ -34,10 +32,10 @@ async def patch_shipment(id: int, shipment_update: ShipmentUpdate, session: Sess
             detail=f"Shipment with id {id} not found."
         )
     
-    return await ShipmentService(session).update(id, update)
+    return await service.update(id, update)
 
 @router.delete("/")
-async def delete_shipment(id: int, session: SessionDep) -> dict[str, str]:
-    await ShipmentService(session).delete(id)
+async def delete_shipment(id: int, service: ServiceDep) -> dict[str, str]:
+    await service.delete(id)
     
     return {"detail": f"Shipment with id {id} is deleted."}
