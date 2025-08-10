@@ -7,7 +7,7 @@ from sqlmodel import Field, SQLModel
 
 class ShipmentStatus(str, Enum):
     PLACED = "Placed"
-    In_TRANSIT = "In Transit"
+    IN_TRANSIT = "In Transit"
     DELIVERED = "Delivered"
     OUT_FOR_DELIVERY = "Out for Delivery"
 

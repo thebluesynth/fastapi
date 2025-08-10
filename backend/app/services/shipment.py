@@ -19,7 +19,7 @@ class ShipmentService:
     async def add(self, shipment_create: ShipmentCreate) -> Shipment:
         new_shipment = Shipment(
             **shipment_create.model_dump(),
-            status=ShipmentStatus.PLACED,
+            status=ShipmentStatus.PLACED.value,
             estimated_delivery=datetime.now() + timedelta(days=3)
         )
 
