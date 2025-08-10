@@ -15,9 +15,10 @@ async def lifespan_handler(app: FastAPI):
 app = FastAPI(lifespan=lifespan_handler)
 app.include_router(router)
 
-@router.get("/scalar", include_in_schema=False)
+@app.get("/scalar", include_in_schema=False)
 def get_scalar_docs():
     return get_scalar_api_reference(
         openapi_url = app.openapi_url,
         title = "Scalar API",
     )
+

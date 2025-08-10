@@ -1,18 +1,15 @@
-from datetime import datetime, timedelta
-
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.schemas.shipment import (ShipmentCreate, ShipmentRead,
-                                      ShipmentUpdate)
-from app.database.models import Shipment, ShipmentStatus
+from app.api.schemas.shipment import ShipmentCreate, ShipmentRead, ShipmentUpdate
+from app.api.services.shipment import ShipmentService
+from app.database.models import Shipment
 from app.database.session import SessionDep
 
-router = APIRouter()
+router = APIRouter(prefix="/shipment", tags=["Shipment"])
 
-@router.get("/shipment", response_model=ShipmentRead)
+@router.get("/", response_model=ShipmentRead)
 async def get_shipment(id: int, session: SessionDep):
-    
-    shipment = await session.get(Shipment, id)
+    shipment = await ShipmentService(session).get(id)
 
     if shipment is None:
         raise HTTPException(
@@ -22,45 +19,25 @@ async def get_shipment(id: int, session: SessionDep):
     
     return shipment
 
-@router.post("/shipment", response_model=None)
-async def submit_shipment(shipment: ShipmentCreate, session: SessionDep) -> dict[str, int]:
-    new_shipment = Shipment(
-        **shipment.model_dump(),
-        status=ShipmentStatus.PLACED,
-        estimated_delivery=datetime.now() + timedelta(days=3)
-    )
+@router.post("/")
+async def submit_shipment(shipment: ShipmentCreate, session: SessionDep) -> Shipment:
+    return await ShipmentService(session).add(shipment)
 
-    session.add(new_shipment)
-    await session.commit()
-    await session.refresh(new_shipment)
-
-    return {"id": new_shipment.id}
-
-@router.patch("/shipment", response_model=ShipmentRead)
+@router.patch("/", response_model=ShipmentRead)
 async def patch_shipment(id: int, shipment_update: ShipmentUpdate, session: SessionDep):
     
     update = shipment_update.model_dump(exclude_none=True)
-    shipment = await session.get(Shipment, id)
     
-    if shipment is None:
+    if not update:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Shipment with id {id} not found."
         )
     
-    shipment.sqlmodel_update(update)
-    
-    session.add(shipment)
-    await session.commit()
-    await session.refresh(shipment)
+    return await ShipmentService(session).update(id, update)
 
-    return shipment
-
-@router.delete("/shipment")
+@router.delete("/")
 async def delete_shipment(id: int, session: SessionDep) -> dict[str, str]:
-    await session.delete(
-       await session.get(Shipment, id)
-    )
-    await session.commit()
-
+    await ShipmentService(session).delete(id)
+    
     return {"detail": f"Shipment with id {id} is deleted."}
